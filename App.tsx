@@ -27,7 +27,7 @@ function Tuner() {
   const [pickerOpen, setPickerOpen] = useState(false);
 
   const tuning = TUNINGS[tuningIndex];
-  const { listening, error, reading, held, tuned, start, stop } = useTuner({ tuning, a4, auto, selected });
+  const { status: tunerStatus, error, reading, held, tuned, start } = useTuner({ tuning, a4, auto, selected });
 
   const abs = reading ? Math.abs(reading.cents) : 0;
   const stateColor = !reading
@@ -38,7 +38,7 @@ function Tuner() {
         ? colors.warn
         : colors.bad;
 
-  let status = listening ? 'Listening… play a string' : 'Tap start and play a string';
+  let status = tunerStatus === 'listening' ? 'Play a string' : tunerStatus === 'needs-tap' ? 'Tap to start listening' : ' ';
   if (reading) {
     const r = Math.round(reading.cents);
     status =
@@ -100,20 +100,17 @@ function Tuner() {
           ))}
         </View>
 
-        <Pressable
-          onPress={listening ? stop : start}
-          style={[styles.primary, listening && styles.primaryListening]}
-          accessibilityRole="button"
-        >
-          <Text style={[styles.primaryText, listening && { color: colors.text }]}>
-            {listening ? 'Stop' : 'Start tuner'}
-          </Text>
-        </Pressable>
+        {tunerStatus === 'needs-tap' && (
+          <Pressable onPress={start} style={styles.primary} accessibilityRole="button">
+            <Text style={styles.primaryText}>Tap to start</Text>
+          </Pressable>
+        )}
 
         {error && (
-          <View style={styles.notice}>
+          <Pressable style={styles.notice} onPress={start} accessibilityRole="button">
             <Text style={styles.noticeText}>{error}</Text>
-          </View>
+            <Text style={[styles.noticeText, styles.retry]}>Tap to try again</Text>
+          </Pressable>
         )}
 
         <View style={styles.row}>
@@ -216,7 +213,6 @@ const styles = StyleSheet.create({
   stringNote: { color: colors.text, fontSize: 18, fontWeight: '600' },
   stringNum: { color: colors.muted, fontSize: 11, marginTop: 2 },
   primary: { backgroundColor: colors.accent, borderRadius: 14, padding: 16, alignItems: 'center' },
-  primaryListening: { backgroundColor: colors.panel, borderColor: colors.line, borderWidth: 1 },
   primaryText: { color: colors.accentText, fontSize: 17, fontWeight: '700' },
   notice: {
     backgroundColor: colors.noticeBg,
@@ -226,6 +222,7 @@ const styles = StyleSheet.create({
     padding: 14,
   },
   noticeText: { color: colors.noticeText, fontSize: 14, lineHeight: 21 },
+  retry: { fontWeight: '700', marginTop: 6 },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, flexWrap: 'wrap' },
   toggle: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   muted: { color: colors.muted, fontSize: 14 },

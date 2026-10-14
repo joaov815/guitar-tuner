@@ -2,6 +2,8 @@
 import { playToneOn, type ToneContext } from './tone';
 
 export const WINDOW_SIZE = 2048;
+/** Thrown when the browser won't run audio until the user taps the page. */
+export const GESTURE_REQUIRED = 'GESTURE_REQUIRED';
 
 export type MicHandle = { stop: () => void };
 export type OnWindow = (samples: Float32Array, sampleRate: number) => void;
@@ -25,6 +27,15 @@ export async function startMicrophone(onWindow: OnWindow): Promise<MicHandle> {
     );
   }
 
+  // Browsers keep audio suspended until the user interacts with the page. When the tuner
+  // auto-starts on load, ask for a tap instead of silently analyzing nothing.
+  const audio = getContext();
+  if (audio.state !== 'running') {
+    await Promise.race([audio.resume(), new Promise((r) => setTimeout(r, 300))]);
+    // resume() may have changed the state since the check above.
+    if ((audio.state as AudioContextState) !== 'running') throw new Error(GESTURE_REQUIRED);
+  }
+
   let stream: MediaStream;
   try {
     stream = await navigator.mediaDevices.getUserMedia({
@@ -39,7 +50,6 @@ export async function startMicrophone(onWindow: OnWindow): Promise<MicHandle> {
     );
   }
 
-  const audio = getContext();
   const analyser = audio.createAnalyser();
   analyser.fftSize = WINDOW_SIZE;
   const source = audio.createMediaStreamSource(stream);

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { AppState, Platform } from 'react-native';
 
-import { startMicrophone, type MicHandle } from './audio';
+import { GESTURE_REQUIRED, startMicrophone, type MicHandle } from './audio';
 import { centsBetween, freqToMidi, midiToFreq, type Tuning } from './music';
 import { detectPitch, MAX_FREQ, MIN_FREQ } from './pitch';
 
@@ -25,10 +26,12 @@ export type Reading = {
 
 type Options = { tuning: Tuning; a4: number; auto: boolean; selected: number };
 
+export type TunerStatus = 'starting' | 'listening' | 'needs-tap' | 'error';
+
 const median = (arr: number[]) => [...arr].sort((x, y) => x - y)[Math.floor(arr.length / 2)];
 
 export function useTuner(options: Options) {
-  const [listening, setListening] = useState(false);
+  const [status, setStatus] = useState<TunerStatus>('starting');
   const [error, setError] = useState<string | null>(null);
   const [reading, setReading] = useState<Reading | null>(null);
   const [held, setHeld] = useState(false);
@@ -37,6 +40,7 @@ export function useTuner(options: Options) {
   const opts = useRef(options);
   opts.current = options;
   const mic = useRef<MicHandle | null>(null);
+  const starting = useRef(false);
   const history = useRef<number[]>([]);
   const lastHeard = useRef(0);
   const lastAnalysis = useRef(0);
@@ -124,23 +128,49 @@ export function useTuner(options: Options) {
   onWindowRef.current = onWindow;
 
   const start = useCallback(async () => {
+    if (mic.current || starting.current) return;
+    starting.current = true;
     setError(null);
     try {
       mic.current = await startMicrophone((s, sr) => onWindowRef.current(s, sr));
-      setListening(true);
+      setStatus('listening');
     } catch (e) {
-      setError((e as Error).message);
+      const message = (e as Error).message;
+      if (message === GESTURE_REQUIRED) setStatus('needs-tap');
+      else {
+        setStatus('error');
+        setError(message);
+      }
+    } finally {
+      starting.current = false;
     }
   }, []);
 
   const stop = useCallback(() => {
     mic.current?.stop();
     mic.current = null;
-    setListening(false);
     resetReading();
   }, [resetReading]);
 
-  useEffect(() => () => mic.current?.stop(), []);
+  // Start listening as soon as the screen mounts; release the mic on unmount.
+  useEffect(() => {
+    start();
+    return stop;
+  }, [start, stop]);
 
-  return { listening, error, reading, held, tuned, start, stop };
+  // On the phone, let go of the mic in the background and pick it back up on return
+  // (this also retries after the user enables microphone access in Settings).
+  useEffect(() => {
+    if (Platform.OS === 'web') return;
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') start();
+      else if (state === 'background') {
+        stop();
+        setStatus('starting');
+      }
+    });
+    return () => sub.remove();
+  }, [start, stop]);
+
+  return { status, error, reading, held, tuned, start };
 }
