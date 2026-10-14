@@ -1,0 +1,49 @@
+{
+  "expo": {
+    "name": "Guitar Tuner",
+    "slug": "guitar-tuner",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.joaovictor.guitartuner"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "package": "com.joaovictor.guitartuner"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "name": "Guitar Tuner",
+      "shortName": "Tuner",
+      "backgroundColor": "#0f1115",
+      "themeColor": "#0f1115",
+      "bundler": "metro",
+      "output": "single"
+    },
+    "plugins": [
+      [
+        "react-native-audio-api",
+        {
+          "iosMicrophonePermission": "Guitar Tuner listens to your guitar through the microphone to detect each string’s pitch.",
+          "iosBackgroundMode": false,
+          "androidForegroundService": false,
+          "androidPermissions": [
+            "android.permission.RECORD_AUDIO"
+          ],
+          "disableFFmpeg": true
+        }
+      ],
+      "./plugins/withSceneLifecycle"
+    ],
+    "backgroundColor": "#0f1115"
+  }
+}
