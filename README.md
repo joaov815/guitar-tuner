@@ -8,11 +8,13 @@ A guitar tuner built with React Native (Expo) that runs as an **iPhone app** and
 | --- | --- |
 | `App.tsx` | The tuner screen |
 | `src/pitch.ts` | Pitch detection (McLeod Pitch Method), pure TypeScript, shared by all platforms |
-| `src/useTuner.ts` | Note tracking: locks onto a pluck, follows it as it rings out, holds the last reading |
-| `src/music.ts` | Tunings and note math |
+| `src/useTuner.ts` | Starts the mic on launch; locks onto a pluck, follows it as it rings out, holds the last reading |
+| `src/music.ts` | Note math (A4 = 440 Hz) |
 | `src/Gauge.tsx` | Needle gauge (react-native-svg) |
-| `src/audio.ts` | iPhone/Android microphone and reference tones via `react-native-audio-api` |
-| `src/audio.web.ts` | Browser microphone (`getUserMedia`) and reference tones via Web Audio |
+| `src/NoteRow.tsx` | A–G♯ row highlighting the closest note |
+| `src/MicLevel.tsx` | Microphone input-level meter |
+| `src/audio.ts` | iPhone/Android microphone via `react-native-audio-api` |
+| `src/audio.web.ts` | Browser microphone via `getUserMedia` and Web Audio |
 | `server.js` | Optional static HTTPS server to share the web build on your local network |
 
 ## iPhone app
@@ -50,7 +52,8 @@ Ports: HTTPS 443 (falls back to 8443), HTTP 80 (falls back to 8080); override wi
 
 ## Features
 
-- Auto string detection or manual string selection
-- Needle gauge with a ±5 cent in-tune zone; strings turn green once tuned
-- Tunings: Standard, Drop D, Half step down, Full step down, Drop C, Open G, Open D, DADGAD
-- Adjustable A4 reference (415–466 Hz) and reference tones per string
+- Chromatic: shows the nearest note and how many cents off it is (A4 = 440 Hz)
+- Starts listening as soon as the app opens
+- Tall needle gauge with a ±5 cent in-tune zone; the screen gets a green frame when in tune
+- Note row (A–G♯) highlighting the closest note, with a marker showing how far off you are
+- Follows a plucked note as it rings out and holds the last reading for a few seconds
