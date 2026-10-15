@@ -7,6 +7,7 @@ import MicLevel from './src/MicLevel';
 import NoteRow from './src/NoteRow';
 import { noteName } from './src/music';
 import { screenCornerRadius } from './src/screenCorners';
+import { useKeepAwakeWhile } from './src/useKeepAwakeWhile';
 import { colors } from './src/theme';
 import { CLOSE_CENTS, IN_TUNE_CENTS, useTuner } from './src/useTuner';
 
@@ -22,6 +23,8 @@ export default function App() {
 function Tuner() {
   const { status, error, reading, held, level, start } = useTuner();
   const cornerRadius = screenCornerRadius(useSafeAreaInsets().bottom);
+  // Don't let the screen lock while a string is being played; quiet hands it back to Auto-Lock.
+  useKeepAwakeWhile(reading !== null);
 
   const abs = reading ? Math.abs(reading.cents) : 0;
   const inTune = !!reading && !held && abs <= IN_TUNE_CENTS;
