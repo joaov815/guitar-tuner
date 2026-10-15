@@ -1,11 +1,12 @@
 import { StatusBar } from 'expo-status-bar';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import Gauge from './src/Gauge';
 import MicLevel from './src/MicLevel';
 import NoteRow from './src/NoteRow';
 import { noteName } from './src/music';
+import { screenCornerRadius } from './src/screenCorners';
 import { colors } from './src/theme';
 import { CLOSE_CENTS, IN_TUNE_CENTS, useTuner } from './src/useTuner';
 
@@ -20,6 +21,7 @@ export default function App() {
 
 function Tuner() {
   const { status, error, reading, held, level, start } = useTuner();
+  const cornerRadius = screenCornerRadius(useSafeAreaInsets().bottom);
 
   const abs = reading ? Math.abs(reading.cents) : 0;
   const inTune = !!reading && !held && abs <= IN_TUNE_CENTS;
@@ -61,8 +63,11 @@ function Tuner() {
         <NoteRow reading={reading} color={stateColor} dimmed={held} />
       </Pressable>
 
-      {/* Green frame while the note is in tune, like a hardware tuner's light. */}
-      <View pointerEvents="none" style={[StyleSheet.absoluteFill, styles.frame, inTune && styles.frameOn]} />
+      {/* Green frame while the note is in tune, following the screen's rounded corners. */}
+      <View
+        pointerEvents="none"
+        style={[StyleSheet.absoluteFill, styles.frame, { borderRadius: cornerRadius }, inTune && styles.frameOn]}
+      />
     </SafeAreaView>
   );
 }
