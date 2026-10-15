@@ -4,10 +4,10 @@
 export const MIN_FREQ = 55;
 export const MAX_FREQ = 1200;
 
-export type PitchResult = { freq: number; clarity: number; rms: number };
+type PitchResult = { freq: number; clarity: number; rms: number };
 
 /** Below this level the signal is treated as silence. */
-export const SILENCE_RMS = 0.0012;
+const SILENCE_RMS = 0.0012;
 
 // Guitar fundamentals stay under ~1.2 kHz, so analyzing above ~24 kHz only costs CPU.
 // This matters on the phone, where the JS engine has no JIT.

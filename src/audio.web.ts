@@ -1,10 +1,10 @@
 // Web audio: microphone via getUserMedia + AnalyserNode. Native builds use audio.ts.
-export const WINDOW_SIZE = 2048;
+const WINDOW_SIZE = 2048;
 /** Thrown when the browser won't run audio until the user taps the page. */
 export const GESTURE_REQUIRED = 'GESTURE_REQUIRED';
 
 export type MicHandle = { stop: () => void };
-export type OnWindow = (samples: Float32Array, sampleRate: number) => void;
+type OnWindow = (samples: Float32Array, sampleRate: number) => void;
 
 let ctx: AudioContext | null = null;
 
