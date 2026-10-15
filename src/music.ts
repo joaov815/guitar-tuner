@@ -1,4 +1,4 @@
-export const A4 = 440;
+const A4 = 440;
 
 /** Note names in the order shown on the note row (starting from A, like most tuners). */
 export const NOTE_ROW = ['A', 'A♯', 'B', 'C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯'];

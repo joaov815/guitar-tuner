@@ -23,7 +23,7 @@ export type Reading = {
   cents: number;
 };
 
-export type TunerStatus = 'starting' | 'listening' | 'needs-tap' | 'error';
+type TunerStatus = 'starting' | 'listening' | 'needs-tap' | 'error';
 
 const median = (arr: number[]) => [...arr].sort((x, y) => x - y)[Math.floor(arr.length / 2)];
 

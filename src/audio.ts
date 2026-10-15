@@ -2,12 +2,12 @@
 // The web build uses audio.web.ts instead.
 import { AudioManager, AudioRecorder } from 'react-native-audio-api';
 
-export const WINDOW_SIZE = 2048;
+const WINDOW_SIZE = 2048;
 /** Error message used by the web build when audio can't start without a tap; never thrown here. */
 export const GESTURE_REQUIRED = 'GESTURE_REQUIRED';
 
 export type MicHandle = { stop: () => void };
-export type OnWindow = (samples: Float32Array, sampleRate: number) => void;
+type OnWindow = (samples: Float32Array, sampleRate: number) => void;
 
 let sessionConfigured = false;
 
