@@ -1,9 +1,10 @@
 import { StatusBar } from 'expo-status-bar';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 import Gauge from './src/Gauge';
-import { midiToFreq, noteName } from './src/music';
+import MicLevel from './src/MicLevel';
+import { noteName } from './src/music';
 import { colors } from './src/theme';
 import { CLOSE_CENTS, IN_TUNE_CENTS, useTuner } from './src/useTuner';
 
@@ -17,52 +18,35 @@ export default function App() {
 }
 
 function Tuner() {
-  const { status: tunerStatus, error, reading, held, start } = useTuner();
+  const { status, error, reading, held, level, start } = useTuner();
 
   const abs = reading ? Math.abs(reading.cents) : 0;
-  const stateColor = !reading
-    ? colors.muted
-    : abs <= IN_TUNE_CENTS
-      ? colors.ok
-      : abs <= CLOSE_CENTS
-        ? colors.warn
-        : colors.bad;
-
-  let status = tunerStatus === 'listening' ? 'Play a string' : tunerStatus === 'needs-tap' ? 'Tap to start listening' : ' ';
-  if (reading) {
-    const r = Math.round(reading.cents);
-    status =
-      abs <= IN_TUNE_CENTS
-        ? 'In tune ✓'
-        : `${r > 0 ? '+' : ''}${r} cents · ${reading.cents > 0 ? 'tune down ↓' : 'tune up ↑'}`;
-  }
+  const inTune = !!reading && !held && abs <= IN_TUNE_CENTS;
+  const stateColor = !reading ? colors.needleIdle : abs <= IN_TUNE_CENTS ? colors.ok : abs <= CLOSE_CENTS ? colors.warn : colors.bad;
 
   const note = reading ? noteName(reading.midi) : null;
+  const caption = reading
+    ? `${reading.freq.toFixed(1)} Hz`
+    : status === 'needs-tap'
+      ? 'Tap to start listening'
+      : status === 'listening'
+        ? 'Play a string'
+        : ' ';
 
   return (
     <SafeAreaView style={styles.safe}>
-      <ScrollView contentContainerStyle={styles.app}>
-        <Text style={styles.title}>Guitar Tuner</Text>
-
-        <View style={styles.panel}>
-          <Gauge cents={reading ? reading.cents : null} color={stateColor} dimmed={held} />
-          <View style={[styles.readout, held && styles.dimmed]}>
-            <Text style={[styles.note, { color: reading ? stateColor : colors.text }]}>
-              {note ? note.name : '–'}
-              {note && <Text style={styles.octave}>{note.octave}</Text>}
-            </Text>
-            <Text style={styles.status}>{status}</Text>
-            <Text style={styles.freq}>
-              {reading ? `${reading.freq.toFixed(1)} Hz  ·  target ${midiToFreq(reading.midi).toFixed(1)} Hz` : ' '}
-            </Text>
-          </View>
+      <Pressable style={styles.app} onPress={status === 'needs-tap' ? start : undefined} accessible={false}>
+        <View style={styles.top}>
+          <MicLevel level={level} active={status === 'listening'} />
         </View>
 
-        {tunerStatus === 'needs-tap' && (
-          <Pressable onPress={start} style={styles.primary} accessibilityRole="button">
-            <Text style={styles.primaryText}>Tap to start</Text>
-          </Pressable>
-        )}
+        <View style={[styles.readout, held && styles.dimmed]}>
+          <Text style={[styles.note, { color: reading ? stateColor : colors.faint }]}>
+            {note ? note.name : '–'}
+            {note && <Text style={styles.octave}>{note.octave}</Text>}
+          </Text>
+          <Text style={styles.caption}>{caption}</Text>
+        </View>
 
         {error && (
           <Pressable style={styles.notice} onPress={start} accessibilityRole="button">
@@ -70,39 +54,35 @@ function Tuner() {
             <Text style={[styles.noticeText, styles.retry]}>Tap to try again</Text>
           </Pressable>
         )}
-      </ScrollView>
+
+        <Gauge cents={reading ? reading.cents : null} color={stateColor} dimmed={held} />
+      </Pressable>
+
+      {/* Green frame while the note is in tune, like a hardware tuner's light. */}
+      <View pointerEvents="none" style={[StyleSheet.absoluteFill, styles.frame, inTune && styles.frameOn]} />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
-  app: { width: '100%', maxWidth: 520, alignSelf: 'center', padding: 16, gap: 20 },
-  title: { color: colors.text, fontSize: 20, fontWeight: '700' },
-  panel: {
-    backgroundColor: colors.panel,
-    borderColor: colors.line,
-    borderWidth: 1,
-    borderRadius: 20,
-    paddingTop: 20,
-    paddingHorizontal: 16,
-    paddingBottom: 24,
-  },
-  readout: { alignItems: 'center', marginTop: 6 },
+  app: { flex: 1, width: '100%', maxWidth: 520, alignSelf: 'center', paddingHorizontal: 16, paddingBottom: 24 },
+  top: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12 },
+  readout: { alignItems: 'center', marginTop: 8 },
   dimmed: { opacity: 0.45 },
-  note: { fontSize: 84, fontWeight: '700', lineHeight: 92, fontVariant: ['tabular-nums'] },
-  octave: { fontSize: 28, fontWeight: '500', color: colors.muted },
-  status: { color: colors.muted, fontSize: 18, marginTop: 8, minHeight: 24 },
-  freq: { color: colors.muted, fontSize: 13, marginTop: 4, fontVariant: ['tabular-nums'] },
-  primary: { backgroundColor: colors.accent, borderRadius: 14, padding: 16, alignItems: 'center' },
-  primaryText: { color: colors.accentText, fontSize: 17, fontWeight: '700' },
+  note: { fontSize: 112, fontWeight: '500', lineHeight: 124, fontVariant: ['tabular-nums'] },
+  octave: { fontSize: 32, fontWeight: '400' },
+  caption: { color: colors.text, fontSize: 20, marginTop: 2, minHeight: 26, fontVariant: ['tabular-nums'] },
   notice: {
     backgroundColor: colors.noticeBg,
     borderColor: colors.noticeBorder,
     borderWidth: 1,
     borderRadius: 12,
     padding: 14,
+    marginTop: 16,
   },
   noticeText: { color: colors.noticeText, fontSize: 14, lineHeight: 21 },
   retry: { fontWeight: '700', marginTop: 6 },
+  frame: { borderWidth: 6, borderColor: 'transparent' },
+  frameOn: { borderColor: colors.ok },
 });

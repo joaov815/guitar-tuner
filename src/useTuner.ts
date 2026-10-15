@@ -27,6 +27,9 @@ export type TunerStatus = 'starting' | 'listening' | 'needs-tap' | 'error';
 
 const median = (arr: number[]) => [...arr].sort((x, y) => x - y)[Math.floor(arr.length / 2)];
 
+/** Map RMS to a 0…1 meter value on a -60…-10 dBFS scale. */
+const toLevel = (rms: number) => Math.max(0, Math.min(1, (20 * Math.log10(rms + 1e-9) + 60) / 50));
+
 function toReading(freq: number): Reading {
   const midi = Math.round(freqToMidi(freq));
   return { freq, midi, cents: centsBetween(freq, midiToFreq(midi)) };
@@ -38,6 +41,7 @@ export function useTuner() {
   const [error, setError] = useState<string | null>(null);
   const [reading, setReading] = useState<Reading | null>(null);
   const [held, setHeld] = useState(false);
+  const [level, setLevel] = useState(0);
 
   const mic = useRef<MicHandle | null>(null);
   const starting = useRef(false);
@@ -56,6 +60,10 @@ export function useTuner() {
       const now = Date.now();
       if (now - lastAnalysis.current < ANALYSIS_INTERVAL_MS) return;
       lastAnalysis.current = now;
+
+      let sum = 0;
+      for (let i = 0; i < samples.length; i++) sum += samples[i] * samples[i];
+      setLevel(toLevel(Math.sqrt(sum / samples.length)));
 
       const result = detectPitch(samples, sampleRate);
       const h = history.current;
@@ -108,6 +116,7 @@ export function useTuner() {
   const stop = useCallback(() => {
     mic.current?.stop();
     mic.current = null;
+    setLevel(0);
     resetReading();
   }, [resetReading]);
 
@@ -131,5 +140,5 @@ export function useTuner() {
     return () => sub.remove();
   }, [start, stop]);
 
-  return { status, error, reading, held, start };
+  return { status, error, reading, held, level, start };
 }
