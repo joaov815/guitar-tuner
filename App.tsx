@@ -4,6 +4,7 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 import Gauge from './src/Gauge';
 import MicLevel from './src/MicLevel';
+import NoteRow from './src/NoteRow';
 import { noteName } from './src/music';
 import { colors } from './src/theme';
 import { CLOSE_CENTS, IN_TUNE_CENTS, useTuner } from './src/useTuner';
@@ -56,6 +57,8 @@ function Tuner() {
         )}
 
         <Gauge cents={reading ? reading.cents : null} color={stateColor} dimmed={held} />
+
+        <NoteRow reading={reading} color={stateColor} dimmed={held} />
       </Pressable>
 
       {/* Green frame while the note is in tune, like a hardware tuner's light. */}
