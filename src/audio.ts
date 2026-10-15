@@ -1,8 +1,6 @@
 // Native (iOS/Android) audio: microphone via react-native-audio-api's AudioRecorder.
 // The web build uses audio.web.ts instead.
-import { AudioContext, AudioManager, AudioRecorder } from 'react-native-audio-api';
-
-import { playToneOn, type ToneContext } from './tone';
+import { AudioManager, AudioRecorder } from 'react-native-audio-api';
 
 export const WINDOW_SIZE = 2048;
 /** Error message used by the web build when audio can't start without a tap; never thrown here. */
@@ -12,15 +10,13 @@ export type MicHandle = { stop: () => void };
 export type OnWindow = (samples: Float32Array, sampleRate: number) => void;
 
 let sessionConfigured = false;
-let toneCtx: AudioContext | null = null;
 
 function configureSession() {
   if (sessionConfigured) return;
   // 'measurement' turns off iOS voice processing (AGC, noise suppression) that would distort pitch.
   AudioManager.setAudioSessionOptions({
-    iosCategory: 'playAndRecord',
+    iosCategory: 'record',
     iosMode: 'measurement',
-    iosOptions: ['defaultToSpeaker', 'allowBluetoothA2DP'],
   });
   sessionConfigured = true;
 }
@@ -62,10 +58,4 @@ export async function startMicrophone(onWindow: OnWindow): Promise<MicHandle> {
       recorder.stop().catch(() => {});
     },
   };
-}
-
-export function playTone(freq: number) {
-  configureSession();
-  if (!toneCtx) toneCtx = new AudioContext();
-  playToneOn(toneCtx as unknown as ToneContext, freq);
 }

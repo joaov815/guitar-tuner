@@ -1,6 +1,4 @@
 // Web audio: microphone via getUserMedia + AnalyserNode. Native builds use audio.ts.
-import { playToneOn, type ToneContext } from './tone';
-
 export const WINDOW_SIZE = 2048;
 /** Thrown when the browser won't run audio until the user taps the page. */
 export const GESTURE_REQUIRED = 'GESTURE_REQUIRED';
@@ -71,8 +69,4 @@ export async function startMicrophone(onWindow: OnWindow): Promise<MicHandle> {
       stream.getTracks().forEach((t) => t.stop());
     },
   };
-}
-
-export function playTone(freq: number) {
-  playToneOn(getContext() as unknown as ToneContext, freq);
 }
